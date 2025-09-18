@@ -24,6 +24,8 @@ jobs:
           node-version: 20
       - run: npm ci
       - run: npm run build          # creates "out"
+      - env:
+          NEXT_PUBLIC_OMDB_KEY: ${{ secrets.OMDB_KEY }} 
       - run: mkdir -p out && echo > out/.nojekyll   # ensure .nojekyll in publish dir
       - uses: actions/upload-pages-artifact@v3
         with:
