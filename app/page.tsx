@@ -1,4 +1,5 @@
 "use client";
+const isBrowser = typeof window !== "undefined";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Papa from "papaparse";
@@ -64,7 +65,7 @@ type Row = {
 export default function App() {
   // theme
   const [isDark, setIsDark] = useState(true);
-  const [accent, setAccent] = useState<AccentKey>(() => (localStorage.getItem("accent") as AccentKey) || "violet");
+  const [accent, setAccent] = useState<AccentKey>("violet");
 
   // data
   const [rawRows, setRawRows] = useState<any[]>([]);
@@ -92,10 +93,17 @@ export default function App() {
   // URL source
   const [csvUrl, setCsvUrl] = useState("");
   useEffect(() => {
-    const saved = localStorage.getItem("ratings_source_url"); if (saved) setCsvUrl(saved);
-    const themeSaved = localStorage.getItem("theme_dark"); if (themeSaved != null) setIsDark(themeSaved === "1");
-  }, []);
-  useEffect(() => { document.documentElement.style.backgroundColor = isDark ? "#0a0a0a" : "#fafafa"; }, [isDark]);
+  if (!isBrowser) return;                         // <-- add
+  const saved = localStorage.getItem("ratings_source_url");
+  if (saved) setCsvUrl(saved);
+  const themeSaved = localStorage.getItem("theme_dark");
+  if (themeSaved != null) setIsDark(themeSaved === "1");
+}, []);
+
+  useEffect(() => {
+  if (!isBrowser) return;                         // <-- add
+  document.documentElement.style.backgroundColor = isDark ? "#0a0a0a" : "#fafafa";
+}, [isDark]);
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -121,7 +129,11 @@ export default function App() {
       setRawRows(res.data as any[]); setIsLoading(false); setPage(1);
     } catch { setError("Could not fetch CSV from that URL."); setIsLoading(false); }
   };
-  const saveAndFetch = async () => { localStorage.setItem("ratings_source_url", csvUrl); await fetchCsvFromUrl(csvUrl); };
+  const saveAndFetch = async () => {
+  if (isBrowser) localStorage.setItem("ratings_source_url", csvUrl);    // <-- guard
+  await fetchCsvFromUrl(csvUrl);
+};
+
   useEffect(() => { if (csvUrl && rawRows.length === 0) fetchCsvFromUrl(csvUrl); /* eslint-disable-next-line */ }, [csvUrl]);
 
   // normalize
@@ -330,7 +342,12 @@ export default function App() {
           </div>
 
           <AccentBtn onClick={() => fileInputRef.current?.click()}>Upload CSV</AccentBtn>
-          <GhostBtn onClick={() => { const next=!isDark; setIsDark(next); localStorage.setItem("theme_dark", next ? "1" : "0"); }}>
+          <GhostBtn onClick={() => {
+  const next = !isDark;
+  setIsDark(next);
+  if (isBrowser) localStorage.setItem("theme_dark", next ? "1" : "0");  // <-- guard
+}}
+>
             {isDark ? "Dark" : "Light"}
           </GhostBtn>
           <input ref={fileInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(e)=>{ const f=e.target.files?.[0]; if (f) onFile(f); }} />
