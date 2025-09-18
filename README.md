@@ -1,7 +1,5 @@
 # IMDb Ratings Visualizer
 
-Live demo: https://mayankkapadi.github.io/imdb-visualizer/
-
 A single-page app to explore and visualize your personal IMDb ratings. Upload an exported CSV or point the app to a public CSV URL. The UI is minimal, fast, and uses a unified accent color with dark/light mode.
 
 ## Features
